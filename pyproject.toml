@@ -4,15 +4,18 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "pywemo-esev"
-version = "0.9.1"
+version = "0.9.1rc19"
 description = "Lightweight Python module to discover and control WeMo devices"
 authors = ["Eric Severance <pywemo@esev.com>"]
 license = "MIT"
+packages = [
+    { include = "pywemo" },
+]
 
 readme = 'README.rst'
 
-repository = "https://github.com/pywemo/pywemo"
-homepage = "https://github.com/pywemo/pywemo"
+repository = "https://github.com/esev/pywemo"
+homepage = "https://github.com/esev/pywemo"
 
 keywords = ['wemo', 'api']
 

@@ -4,7 +4,12 @@ on:
   push:
     branches:
     - main
+    - pywemo_esev
   workflow_call:
+    outputs:
+      version:
+        description: "Version of built module"
+        value: ${{ jobs.build.outputs.version }}
 
 permissions: {}  # No permissions needed for this workflow.
 
@@ -12,6 +17,8 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.build.outputs.version }}
     strategy:
       max-parallel: 4
       matrix:
@@ -57,4 +64,4 @@ jobs:
           name: coverage-3.10
       - uses: coverallsapp/github-action@v2
         with:
-          path-to-lcov: coverage.lcov
+          path-to-lcov: ${{ steps.build.outputs.coverage-lcov }}

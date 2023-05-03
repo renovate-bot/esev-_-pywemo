@@ -1,5 +1,5 @@
-pyWeMo |Build Badge| |PyPI Version Badge| |Coverage| |PyPI Downloads Badge|
-===========================================================================
+pyWeMo |Build Badge| |PyPI Version Badge| |Coverage| |PyPI Downloads Badge| |SLSA 3 Badge|
+============================================================================================
 Python 3 module to setup, discover and control WeMo devices.
 
 Dependencies
@@ -114,6 +114,19 @@ This raises the possibility that Belkin could, in the future, update WeMo device
 If this happens, ``pywemo`` may no longer function on that device.
 Thus it would be prudent to upgrade firmware cautiously and preferably only after confirming that breaking API changes have not been introduced.
 
+Installing
+----------
+pyWeMo requires Python 3.8 or newer, and can be installed directly via ``pip``:
+
+.. code-block::
+
+    python -m pip install pywemo
+
+This project emits a SLSA provenance on its release.
+This enables you to verify the integrity of the downloaded artifacts and ensures that the module's code really comes from this source code.
+
+To do so, please follow the `How to verify SLSA provenance <https://github.com/pywemo/pywemo/releases/latest#user-content-slsa>`_ instructions on the GitHub release.
+
 Developing
 ----------
 Setup and builds are fully automated.
@@ -154,3 +167,6 @@ The rest of pyWeMo is released under the MIT license. See the top-level LICENSE 
 .. |PyPI Downloads Badge| image:: https://img.shields.io/pypi/dm/pywemo
     :target: https://pypi.org/project/pywemo/
     :alt: Number of PyPI downloads
+.. |SLSA 3 Badge| image:: https://slsa.dev/images/gh-badge-level3.svg
+    :target: https://github.com/pywemo/pywemo/releases/latest#user-content-slsa
+    :alt: SLSA level 3

@@ -18,56 +18,147 @@ jobs:
 
   check:
     name: Check version and tag match
+    needs: [build]
     runs-on: ubuntu-latest
-    needs: build
-    outputs:
-      version: ${{ steps.outputs.outputs.version }}
-      artifact: ${{ steps.outputs.outputs.artifact }}
     steps:
-      - name: Set Outputs
-        id: outputs
-        run: |
-          echo "artifact=dist-files-3.10" | tee -a "$GITHUB_OUTPUT"
-          echo "version=$GITHUB_REF_NAME" | tee -a "$GITHUB_OUTPUT"
-      - name: Download build artifacts
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download dist artifacts
         uses: actions/download-artifact@v3
         with:
-          name: ${{ steps.outputs.outputs.artifact }}
-          path: dist
+          name: ${{ env.DIST_ARTIFACT }}
       - name: Check if tag version matches project version
+        env:
+          BUILD_VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          echo "TAG: $GITHUB_REF_NAME"
+          echo "VERSION: $BUILD_VERSION"
+          if [[ "$GITHUB_REF_NAME" != "$BUILD_VERSION" ]]; then exit 1; fi
+
+  hash:
+    name: Generate SHA256 hashes
+    needs: [build, check]
+    runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.DIST_ARTIFACT }}
+          path: dist
+      - name: Hash dist files
+        id: hash
         working-directory: dist
         run: |
-          # Get the version from the PKG-INFO in the source package.
-          tar -xzf *.tar.gz
-          DIST_VERSION=$(sed -ne 's/^Version: \([0-9]\..*\)$/\1/p' < */PKG-INFO | head -1)
-          echo "TAG: $GITHUB_REF_NAME"
-          echo "VERSION: $DIST_VERSION"
-          if [[ "$GITHUB_REF_NAME" != "$DIST_VERSION" ]]; then exit 1; fi
+          sha256sum * | tee "pywemo-${GITHUB_REF_NAME}.sha256sum.txt"
+          echo "hashes=$(sha256sum * | base64 -w0)" | tee -a "$GITHUB_OUTPUT"
+      - name: Archive hashes
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: hashes
+          path: dist/pywemo-${{ needs.build.outputs.version }}.sha256sum.txt
 
-  publish:
-    name: Publish
-    runs-on: ubuntu-latest
-    needs: check
-    environment: release
+  slsa:
+    name: Generate SLSA provenance
+    needs: [build, hash]
     permissions:
-      id-token: write # For PyPI trusted publishing
-      contents: write # Adding assets to the release
+      # Needed to upload assets to the Github release.
+      # TODO: Find a way to remove this:
+      #   https://github.com/slsa-framework/slsa-github-generator/issues/2044
+      contents: write  
+      # Needed to detect the GitHub Actions environment.
+      actions: read
+      # Needed to create the provenance via GitHub OIDC.
+      id-token: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.5.0
+    with:
+      # SHA-256 hashes of the Python distributions.
+      base64-subjects: ${{ needs.hash.outputs.hashes }}
+      # Provenance file name.
+      provenance-name: provenance-pywemo-${{ needs.build.outputs.version }}.intoto.jsonl
+
+  sigstore:
+    name: Generate Sigstore signatures
+    needs: [build, hash]
+    runs-on: ubuntu-latest
+    permissions:
+      # For Sigstore provenance.
+      id-token: write 
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v3
-        with:
-          name: ${{ needs.check.outputs.artifact }}
-          path: dist
       - name: Sign the release
         uses: sigstore/gh-action-sigstore-python@v1.2.3
         with:
-          inputs: ./dist/*
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # v1.8.6
-      - name: Generate Checksums
-        working-directory: dist
-        run: sha256sum * | tee sha256sums.txt
-      - name: Add assets to release
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # v0.1.15
+          inputs: ./${DIST_ARTIFACT}/* ./hashes/*
+          upload-signing-artifacts: true
+
+  assets:
+    name: Publish Release assets
+    needs: [build, hash, slsa, sigstore]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      # Needed to run "gh release upload" and "rest.repos.updateRelease".
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PROVENANCE_NAME: ${{ needs.slsa.outputs.provenance-name }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" \
+            ./${DIST_ARTIFACT}/* \
+            ./hashes/* \
+            "./${PROVENANCE_NAME}/${PROVENANCE_NAME}" \
+            ./signing-artifacts-sigstore/*/*.sigstore
+      - name: Add SHA256SUM environment variable
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "SHA256SUM<<$EOF" >> "$GITHUB_ENV"
+          cat ./hashes/*.sha256sum.txt >> "$GITHUB_ENV"
+          echo "$EOF" >> "$GITHUB_ENV"
+      - name: Update release text
+        env:
+          BODY: ${{ github.event.release.body || '' }}
+          RELEASE_ID: ${{ github.event.release.id }}
+          TEMPLATE_FILE: ./.github/RELEASE_NOTES_TEMPLATE.md
+        uses: actions/github-script@v6
         with:
-          files: dist/*
+          script: |
+            const fsp = require('fs').promises;
+            let body = await fsp.readFile(process.env.TEMPLATE_FILE, { encoding: 'utf8' });
+            for (const [key, value] of Object.entries(process.env)) {
+                body = body.replaceAll(`\${${key}}`, value);
+            }
+
+            await github.rest.repos.updateRelease({
+                ...context.repo,
+                release_id: process.env.RELEASE_ID,
+                body: body,
+            });
+
+  pypi:
+    name: Publish to PyPi
+    runs-on: ubuntu-latest
+    needs: [assets]
+    environment: release
+    permissions:
+      # Needed for PyPI trusted publishing.
+      id-token: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ env.DIST_ARTIFACT }}
+          path: dist
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.8.6
+        with:
+          repository-url: https://test.pypi.org/legacy/
