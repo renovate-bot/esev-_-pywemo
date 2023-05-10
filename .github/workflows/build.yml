@@ -35,6 +35,8 @@ jobs:
         env:
           OUTPUT_ENV_VAR: GITHUB_OUTPUT
         run: ./scripts/build.sh
+      - name: Validate no code changes were made
+        run: git diff-index --quiet "${GITHUB_SHA}" --
       - name: Archive build artifacts
         uses: actions/upload-artifact@v3
         with:
