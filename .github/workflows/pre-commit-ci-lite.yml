@@ -1,4 +1,4 @@
-name: pre-commit PR check
+name: "Pre-commit.ci lite"
 
 on:
   pull_request:
