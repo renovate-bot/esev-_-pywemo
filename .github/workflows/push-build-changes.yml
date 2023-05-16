@@ -1,0 +1,60 @@
+# https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+name: Push build changes
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+permissions: {}  # No permissions by default. Permissions are added per-job.
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'failure'
+    steps:
+      - name: Dump GitHub context
+        run: echo $JSON
+        env:
+          JSON: ${{ toJSON(github) }}
+      - name: Download build changes
+        id: download
+        uses: actions/github-script@v3.1.0
+        with:
+          result-encoding: string
+          script: |
+            const artifacts = await github.actions.listWorkflowRunArtifacts({
+              ...context.repo,
+              run_id: ${{github.event.workflow_run.id}},
+            });
+            const buildChangesArtifacts = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name.startsWith("build-changes-");
+            });
+            if (buildChangesArtifacts.length < 1) {
+              return '';
+            }
+            const download = await github.actions.downloadArtifact({
+              ...context.repo,
+              artifact_id: buildChangesArtifacts[0].id,
+              archive_format: 'zip',
+            });
+            await io.mkdirP('${{github.workspace}}/.cache');
+            const fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/.cache/build-changes.zip', Buffer.from(download.data));
+            return '${{github.workspace}}/.cache/build-changes.zip';
+      - name: Checkout code
+        if: steps.download.outputs.result
+        uses: actions/checkout@v3
+        with:
+          ref: ${{github.event.workflow_run.pull_requests[0].head.ref}}
+      - name: Push changes
+        if: steps.download.outputs.result
+        env:
+          CHANGES_ZIP: ${{steps.download.outputs.result}}
+        run: |
+          (cd $(dirname "$CHANGES_ZIP") && unzip $(basename "$CHANGES_ZIP"))
+          git apply --no-add --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
+          git push
