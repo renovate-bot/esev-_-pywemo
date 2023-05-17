@@ -64,7 +64,7 @@ jobs:
         working-directory: pywemo_checkout
         run: |
           (cd $(dirname "$CHANGES_ZIP") && unzip $(basename "$CHANGES_ZIP"))
-          git apply --no-add --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
+          git apply --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
       - name: Generate a token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
