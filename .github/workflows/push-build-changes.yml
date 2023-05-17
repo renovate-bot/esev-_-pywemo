@@ -7,6 +7,7 @@ on:
     types:
       - completed
     branches:
+      - dependabot/**
       - pywemo_esev_pr
 
 permissions: {}  # No permissions by default. Permissions are added per-job.
@@ -22,10 +23,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Dump GitHub context
-        run: echo $JSON
-        env:
-          JSON: ${{ toJSON(github) }}
       - name: Download build changes
         id: download
         uses: actions/github-script@v3.1.0
