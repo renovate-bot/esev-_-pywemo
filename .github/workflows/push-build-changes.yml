@@ -28,8 +28,8 @@ jobs:
     steps:
       # If changes were needed, the Build workflow will upload the diff as an
       # artifact. Find the artifact, download it, and return the path to the
-      # downloaded file. The path will be an empty string '' if no artifacts
-      # are found.
+      # downloaded file. The returned path will be an empty string '' if no
+      # artifacts are found.
       - name: Download build changes
         id: download
         uses: actions/github-script@v6
@@ -56,7 +56,7 @@ jobs:
             fs.writeFileSync('${{github.workspace}}/download/build-changes.zip', Buffer.from(download.data));
             return '${{github.workspace}}/download/build-changes.zip';
 
-      # Checkout the HEAD for the branch.
+      # Checkout the HEAD for the PR's branch.
       - name: Checkout code
         if: steps.download.outputs.result
         uses: actions/checkout@v3
@@ -74,8 +74,8 @@ jobs:
           (cd $(dirname "$CHANGES_ZIP") && unzip $(basename "$CHANGES_ZIP"))
           git apply --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
 
-      # Get a token to changes to be pushed by the and app. An app is used
-      # instead of using the runner permissions because the runner cannot
+      # Get a token so changes are pushed by an app. An app is used instead
+      # of using the runner permissions because the runner actions cannot
       # trigger additional workflows to run. And we want the Build workflow
       # on the PR to be triggered after pushing a commit.
       - name: Generate a token
@@ -105,6 +105,7 @@ jobs:
 
             // Add the modified files to treeObjs.
             await exec.exec('git', ['diff-index', '--cached', 'HEAD'], options);
+            options.silent = true;
             const treeObjs = [];
             for (let diff of output.split('\n')) {
               const start = diff.split(':', 2);
@@ -126,13 +127,17 @@ jobs:
               });
             }
 
+            if (treeObjs.length < 1) {
+              console.log('No files to upload');
+              return;
+            }
+
             // Create a new tree containing the changed blobs.
             const tree = await github.rest.git.createTree({
               ...context.repo,
               tree: treeObjs,
               base_tree: '${{github.event.workflow_run.head_commit.tree_id}}'
             });
-            console.log(tree);
 
             // Create a commit for the tree. This will be signed automatically.
             const gitCommit = await github.rest.git.createCommit({
@@ -141,7 +146,6 @@ jobs:
               tree: tree.data.sha,
               parents: ['${{github.event.workflow_run.head_commit.id}}'],
             });
-            console.log(gitCommit);
 
             // Update the branch HEAD to the new commit.
             const ref = await github.rest.git.updateRef({
@@ -149,4 +153,3 @@ jobs:
               ref: 'heads/${{github.event.workflow_run.head_branch}}',
               sha: gitCommit.data.sha,
             });
-            console.log(ref);
