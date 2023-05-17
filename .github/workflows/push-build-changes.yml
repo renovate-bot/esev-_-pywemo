@@ -54,16 +54,71 @@ jobs:
         with:
           ref: ${{github.event.workflow_run.head_branch}}
           path: pywemo_checkout
-      - name: Push changes
+      - name: Apply changes
         if: steps.download.outputs.result
         env:
           CHANGES_ZIP: ${{steps.download.outputs.result}}
-          PARENT_SHA: ${{github.event.workflow_run.head_sha}}
         working-directory: pywemo_checkout
         run: |
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
           (cd $(dirname "$CHANGES_ZIP") && unzip $(basename "$CHANGES_ZIP"))
           git apply --no-add --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
-          git commit -nm "[dependabot skip] build changes for $PARENT_SHA"
-          git push
+      - name: Push changes
+        uses: actions/github-script@v3.1.0
+        with:
+          # https://github.com/orgs/community/discussions/50055
+          script: |
+            let output = '';
+            const options = {};
+            options.listeners = {
+              stdout: (data: Buffer) => {
+                output += data.toString();
+              }
+            };
+            options.cwd = './pywemo_checkout';
+            const rc = await exec.exec('git', ['diff-index', '--cached', 'HEAD'], options);
+            const treeObjs = [];
+            for (let diff of output.split('\n')) {
+              const [metas, name] = diff.split('\t', 1);
+              console.log(name);
+              const meta = metas.split(' ');
+              console.log(meta);
+              if (meta.length < 5 || meta[4] != 'M') continue;
+              output = '';
+              const rc = await exec.exec('git', ['cat-file', meta[3]], options);
+              treeObjs.push({
+                path: name,
+                mode: meta[1],
+                type: 'blob',
+                content: output
+              });
+            }
+            console.log(treeObjs);
+            const tree = await github.git.createTree({
+              ...context.repo,
+              tree: treeObjs,
+              base_tree: '${{github.event.workflow_run.head_commit.tree_id}}'
+            });
+            console.log(tree);
+            const gitCommit = await this.octokitClient.git.createCommit({
+              ...context.repo,
+              message: '[dependabot skip] build changes for ${{github.event.workflow_run.head_commit.id}}',
+              tree: tree.data.sha,
+              parents: ['${{github.event.workflow_run.head_commit.id}}'],
+            });
+            console.log(gitCommit);
+            const ref = await git.updateRef({
+              ...context.repo,
+              ref: 'refs/heads/${{github.event.workflow_run.head_branch}}',
+              sha: gitCommit.data.sha,
+            });
+            console.log(ref);
+      # - name: Push changes
+      #   if: steps.download.outputs.result
+      #   env:
+      #     PARENT_SHA: ${{github.event.workflow_run.head_sha}}
+      #   working-directory: pywemo_checkout
+      #   run: |
+      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      #     git config user.name "github-actions[bot]"
+      #     git commit -nm "[dependabot skip] build changes for $PARENT_SHA"
+      #     git push
