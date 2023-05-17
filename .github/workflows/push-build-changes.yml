@@ -24,8 +24,7 @@ jobs:
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
       github.actor == 'esev'
-    permissions:
-      contents: write
+    environment: push-build-changes
     steps:
       - name: Download build changes
         id: download
@@ -66,8 +65,16 @@ jobs:
         run: |
           (cd $(dirname "$CHANGES_ZIP") && unzip $(basename "$CHANGES_ZIP"))
           git apply --no-add --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
+      - name: Generate a token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Push changes
         if: steps.download.outputs.result
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
         uses: actions/github-script@v6
         with:
           # https://github.com/orgs/community/discussions/50055
