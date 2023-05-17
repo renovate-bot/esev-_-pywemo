@@ -6,6 +6,8 @@ on:
     workflows: ["Build"]
     types:
       - completed
+    branches:
+      - pywemo_esev_pr
 
 permissions: {}  # No permissions by default. Permissions are added per-job.
 
