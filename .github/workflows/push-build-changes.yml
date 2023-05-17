@@ -73,10 +73,9 @@ jobs:
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
       - name: Push changes
         if: steps.download.outputs.result
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
         uses: actions/github-script@v6
         with:
+          github-token: ${{ steps.generate_token.outputs.token }}
           # https://github.com/orgs/community/discussions/50055
           script: |
             // Configure exec options. Will write stdout to 'output'.
