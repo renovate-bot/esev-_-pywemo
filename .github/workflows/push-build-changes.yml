@@ -63,42 +63,48 @@ jobs:
           (cd $(dirname "$CHANGES_ZIP") && unzip $(basename "$CHANGES_ZIP"))
           git apply --no-add --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
       - name: Push changes
+        if: steps.download.outputs.result
         uses: actions/github-script@v6
         with:
           # https://github.com/orgs/community/discussions/50055
           script: |
+            // Configure exec options. Will write stdout to 'output'.
             let output = '';
-            const options = {};
-            options.listeners = {
-              stdout: (data) => {
-                output += data.toString();
-              }
+            const options = {
+              listeners: {stdout: (data) => { output += data.toString(); }},
+              cwd: './pywemo_checkout'
             };
-            options.cwd = './pywemo_checkout';
+
+            // Add the modified files to treeObjs.
             await exec.exec('git', ['diff-index', '--cached', 'HEAD'], options);
             const treeObjs = [];
             for (let diff of output.split('\n')) {
-              const [metas, name] = diff.split('\t', 2);
-              console.log(name);
+              const start = diff.split(':', 2)[1]
+              const [metas, path] = start.split('\t', 2);
               const meta = metas.split(' ');
-              console.log(meta);
-              if (meta.length < 5 || meta[4] != 'M') continue;
+              if (meta.length < 5 || meta[4] !== 'M') continue;
+
+              // Fetch the file contents into 'output'.
               output = '';
               await exec.exec('git', ['cat-file', 'blob', meta[3]], options);
+
               treeObjs.push({
-                path: name,
+                path: path,
                 mode: meta[1],
                 type: 'blob',
                 content: output
               });
             }
-            console.log(treeObjs);
+
+            // Create a new tree containing the changed blobs.
             const tree = await github.rest.git.createTree({
               ...context.repo,
               tree: treeObjs,
               base_tree: '${{github.event.workflow_run.head_commit.tree_id}}'
             });
             console.log(tree);
+
+            // Create a commit for the tree. This will be signed automatically.
             const gitCommit = await github.rest.git.createCommit({
               ...context.repo,
               message: '[dependabot skip] build changes for ${{github.event.workflow_run.head_commit.id}}',
@@ -106,19 +112,11 @@ jobs:
               parents: ['${{github.event.workflow_run.head_commit.id}}'],
             });
             console.log(gitCommit);
+
+            // Update the branch HEAD to the new commit.
             const ref = await github.rest.git.updateRef({
               ...context.repo,
               ref: 'heads/${{github.event.workflow_run.head_branch}}',
               sha: gitCommit.data.sha,
             });
             console.log(ref);
-      # - name: Push changes
-      #   if: steps.download.outputs.result
-      #   env:
-      #     PARENT_SHA: ${{github.event.workflow_run.head_sha}}
-      #   working-directory: pywemo_checkout
-      #   run: |
-      #     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      #     git config user.name "github-actions[bot]"
-      #     git commit -nm "[dependabot skip] build changes for $PARENT_SHA"
-      #     git push
