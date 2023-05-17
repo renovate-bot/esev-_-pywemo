@@ -1,3 +1,7 @@
+# This is designed to run after the "Build" workflow has failed due to modified
+# files being detected. This workflow runs with elevated permissions to push a
+# commit onto the PR that contains the modified files.
+#
 # https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 name: Push build changes
 
@@ -79,8 +83,10 @@ jobs:
             await exec.exec('git', ['diff-index', '--cached', 'HEAD'], options);
             const treeObjs = [];
             for (let diff of output.split('\n')) {
-              const start = diff.split(':', 2)[1]
-              const [metas, path] = start.split('\t', 2);
+              const start = diff.split(':', 2);
+              if (start.length < 2 || start[1].search('\t') < 30) continue;
+
+              const [metas, path] = start[1].split('\t', 2);
               const meta = metas.split(' ');
               if (meta.length < 5 || meta[4] !== 'M') continue;
 
