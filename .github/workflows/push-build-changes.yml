@@ -108,7 +108,7 @@ jobs:
             console.log(gitCommit);
             const ref = await github.rest.git.updateRef({
               ...context.repo,
-              ref: 'refs/heads/${{github.event.workflow_run.head_branch}}',
+              ref: 'heads/${{github.event.workflow_run.head_branch}}',
               sha: gitCommit.data.sha,
             });
             console.log(ref);
