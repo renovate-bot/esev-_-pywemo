@@ -75,16 +75,16 @@ jobs:
               }
             };
             options.cwd = './pywemo_checkout';
-            const rc = await exec.exec('git', ['diff-index', '--cached', 'HEAD'], options);
+            await exec.exec('git', ['diff-index', '--cached', 'HEAD'], options);
             const treeObjs = [];
             for (let diff of output.split('\n')) {
-              const [metas, name] = diff.split('\t', 1);
+              const [metas, name] = diff.split('\t', 2);
               console.log(name);
               const meta = metas.split(' ');
               console.log(meta);
               if (meta.length < 5 || meta[4] != 'M') continue;
               output = '';
-              const rc = await exec.exec('git', ['cat-file', meta[3]], options);
+              await exec.exec('git', ['cat-file', 'blob', meta[3]], options);
               treeObjs.push({
                 path: name,
                 mode: meta[1],
