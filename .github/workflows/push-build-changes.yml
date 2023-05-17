@@ -29,7 +29,7 @@ jobs:
         with:
           result-encoding: string
           script: |
-            const artifacts = await github.actions.listWorkflowRunArtifacts({
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
               ...context.repo,
               run_id: ${{github.event.workflow_run.id}},
             });
@@ -39,7 +39,7 @@ jobs:
             if (buildChangesArtifacts.length < 1) {
               return '';
             }
-            const download = await github.actions.downloadArtifact({
+            const download = await github.rest.actions.downloadArtifact({
               ...context.repo,
               artifact_id: buildChangesArtifacts[0].id,
               archive_format: 'zip',
@@ -93,20 +93,20 @@ jobs:
               });
             }
             console.log(treeObjs);
-            const tree = await github.git.createTree({
+            const tree = await github.rest.git.createTree({
               ...context.repo,
               tree: treeObjs,
               base_tree: '${{github.event.workflow_run.head_commit.tree_id}}'
             });
             console.log(tree);
-            const gitCommit = await this.octokitClient.git.createCommit({
+            const gitCommit = await github.rest.git.createCommit({
               ...context.repo,
               message: '[dependabot skip] build changes for ${{github.event.workflow_run.head_commit.id}}',
               tree: tree.data.sha,
               parents: ['${{github.event.workflow_run.head_commit.id}}'],
             });
             console.log(gitCommit);
-            const ref = await git.updateRef({
+            const ref = await github.rest.git.updateRef({
               ...context.repo,
               ref: 'refs/heads/${{github.event.workflow_run.head_branch}}',
               sha: gitCommit.data.sha,
