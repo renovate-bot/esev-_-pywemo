@@ -14,7 +14,7 @@ on:
       - dependabot/**
       - pywemo_esev_pr
 
-permissions: {}  # No permissions by default. Permissions are added per-job.
+permissions: {}  # No permissions needed for this workflow.
 
 jobs:
   push:
@@ -23,9 +23,13 @@ jobs:
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'failure' &&
       github.event.workflow_run.head_repository.full_name == github.repository &&
-      github.actor == 'esev'
+      (github.actor == 'dependabot[bot]' || github.actor == 'esev')
     environment: push-build-changes
     steps:
+      # If changes were needed, the Build workflow will upload the diff as an
+      # artifact. Find the artifact, download it, and return the path to the
+      # downloaded file. The path will be an empty string '' if no artifacts
+      # are found.
       - name: Download build changes
         id: download
         uses: actions/github-script@v6
@@ -51,12 +55,16 @@ jobs:
             const fs = require('fs');
             fs.writeFileSync('${{github.workspace}}/download/build-changes.zip', Buffer.from(download.data));
             return '${{github.workspace}}/download/build-changes.zip';
+
+      # Checkout the HEAD for the branch.
       - name: Checkout code
         if: steps.download.outputs.result
         uses: actions/checkout@v3
         with:
           ref: ${{github.event.workflow_run.head_branch}}
           path: pywemo_checkout
+
+      # Apply the patch.
       - name: Apply changes
         if: steps.download.outputs.result
         env:
@@ -65,18 +73,28 @@ jobs:
         run: |
           (cd $(dirname "$CHANGES_ZIP") && unzip $(basename "$CHANGES_ZIP"))
           git apply --cached "$(dirname "$CHANGES_ZIP")/build-changes.patch"
+
+      # Get a token to changes to be pushed by the and app. An app is used
+      # instead of using the runner permissions because the runner cannot
+      # trigger additional workflows to run. And we want the Build workflow
+      # on the PR to be triggered after pushing a commit.
       - name: Generate a token
         id: generate_token
+        if: steps.download.outputs.result
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # v1.8.0
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      # Push a commit with the required changes to the branch. The GitHub git
+      # API is used, instead of running git on the command line, because GitHub
+      # will automatically sign commits that are created via the API.
+      # https://github.com/orgs/community/discussions/50055
       - name: Push changes
         if: steps.download.outputs.result
         uses: actions/github-script@v6
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
-          # https://github.com/orgs/community/discussions/50055
           script: |
             // Configure exec options. Will write stdout to 'output'.
             let output = '';
