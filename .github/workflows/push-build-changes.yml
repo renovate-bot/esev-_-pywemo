@@ -113,6 +113,7 @@ jobs:
 
               const [metas, path] = start[1].split('\t', 2);
               const meta = metas.split(' ');
+              // Only interested in modifications ('M'). Skip all others.
               if (meta.length < 5 || meta[4] !== 'M') continue;
 
               // Fetch the file contents into 'output'.
