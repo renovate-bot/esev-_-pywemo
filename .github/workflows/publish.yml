@@ -111,10 +111,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PROVENANCE_NAME: ${{ needs.slsa.outputs.provenance-name }}
         run: |
+          ln -s "${PROVENANCE_NAME}" "./${PROVENANCE_NAME}/multiple.intoto.jsonl"
           gh release upload "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" \
             ./${DIST_ARTIFACT}/* \
             ./hashes/* \
             "./${PROVENANCE_NAME}/${PROVENANCE_NAME}" \
+            "./${PROVENANCE_NAME}/multiple.intoto.jsonl" \
             ./signing-artifacts-sigstore/*/*.sigstore
       - name: Add SHA256SUM environment variable
         run: |
