@@ -65,7 +65,7 @@ SLSA verifier installation instructions can be found at [github.com/slsa-framewo
 ```bash
 # Download the release wheel and .intoto.jsonl file.
 wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/pywemo-${GITHUB_REF_NAME}-py3-none-any.whl
-wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/provenance-pywemo-${GITHUB_REF_NAME}.intoto.jsonl
+wget https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/pywemo-${GITHUB_REF_NAME}.intoto.jsonl
 
 # Verify that the wheel was built from this release.
 slsa-verifier verify-artifact \

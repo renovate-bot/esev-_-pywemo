@@ -75,7 +75,7 @@ jobs:
       # SHA-256 hashes of the Python distributions.
       base64-subjects: ${{ needs.hash.outputs.hashes }}
       # Provenance file name.
-      provenance-name: provenance-pywemo-${{ needs.build.outputs.version }}.intoto.jsonl
+      provenance-name: pywemo-${{ needs.build.outputs.version }}.intoto.jsonl
 
   sigstore:
     name: Generate Sigstore signatures
