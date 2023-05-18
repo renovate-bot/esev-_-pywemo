@@ -63,7 +63,7 @@ jobs:
     needs: [build, hash]
     permissions:
       # Needed to upload assets to the Github release.
-      # TODO: Find a way to remove this:
+      # TODO: Find a way to remove 'contents: write':
       #   https://github.com/slsa-framework/slsa-github-generator/issues/2044
       #   https://github.com/slsa-framework/slsa-github-generator/issues/2076
       contents: write  
