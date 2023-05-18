@@ -11,10 +11,6 @@ enterVenv
 poetryInstall
 
 echo
-echo "===Installing pre-commit hooks==="
-pre-commit install
-
-echo
 echo "===Running pre-commit checks==="
 pre-commit run --all-files
 
