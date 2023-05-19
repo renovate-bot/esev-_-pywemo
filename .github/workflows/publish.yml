@@ -49,9 +49,11 @@ jobs:
           path: dist
       - name: Hash dist files
         id: hash
+        env:
+          PYWEMO_VERSION=${{ needs.build.outputs.version }}
         working-directory: dist
         run: |
-          sha256sum * | tee "pywemo-${GITHUB_REF_NAME}.sha256sum.txt"
+          sha256sum * | tee "pywemo-${PYWEMO_VERSION}.sha256sum.txt"
           echo "hashes=$(sha256sum * | base64 -w0)" | tee -a "$GITHUB_OUTPUT"
       - name: Archive hashes
         uses: actions/upload-artifact@v3
