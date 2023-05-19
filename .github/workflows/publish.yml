@@ -188,7 +188,7 @@ jobs:
         with:
           script: |
             const fsp = require('fs').promises;
-            let body = await fsp.readFile(
+            const body = await fsp.readFile(
               '${{github.workspace}}/release-notes.md', { encoding: 'utf8' });
             await github.rest.repos.updateRelease({
                 ...context.repo,
