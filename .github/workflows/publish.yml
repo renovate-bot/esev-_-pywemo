@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           name: ${{ env.DIST_ARTIFACT }}
       - name: Check if tag version matches project version
@@ -50,7 +50,7 @@ jobs:
       hashes: ${{ steps.hash.outputs.hashes }}
     steps:
       - name: Download dist artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           name: ${{ env.DIST_ARTIFACT }}
           path: dist
@@ -63,7 +63,7 @@ jobs:
           sha256sum * | tee "pywemo-${PYWEMO_VERSION}.sha256sum.txt"
           echo "hashes=$(sha256sum * | base64 -w0)" | tee -a "$GITHUB_OUTPUT"
       - name: Archive hashes
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           if-no-files-found: error
           name: hashes
@@ -82,6 +82,10 @@ jobs:
       actions: read
       # Needed to create the provenance via GitHub OIDC.
       id-token: write
+    # Best practices for workflows suggest actions/workflows should be pinned
+    # by their git commit SHA digest.
+    # TODO: Pin this workflow with a git commit SHA digest.
+    #   https://github.com/slsa-framework/slsa-verifier/issues/12
     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.6.0
     with:
       # SHA-256 hashes of the Python distributions.
@@ -98,9 +102,9 @@ jobs:
       id-token: write 
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
       - name: Sign the release
-        uses: sigstore/gh-action-sigstore-python@v1.2.3
+        uses: sigstore/gh-action-sigstore-python@e323e1b02e26cc6600843935562c862b94200b0c # v1.2.3
         with:
           inputs: ./${DIST_ARTIFACT}/* ./hashes/*
           upload-signing-artifacts: true
@@ -111,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
       - name: Populate release assets
         env:
           PROVENANCE_NAME: ${{ needs.slsa.outputs.provenance-name }}
@@ -130,14 +134,14 @@ jobs:
           cat ./hashes/*.sha256sum.txt >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           path: pywemo_checkout
       - name: Update release text
         env:
           BODY: ${{ github.event.release && github.event.release.body || '' }}
           TEMPLATE_FILE: ./pywemo_checkout/.github/RELEASE_NOTES_TEMPLATE.md
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
         with:
           script: |
             const fsp = require('fs').promises;
@@ -148,7 +152,7 @@ jobs:
             }
             await fsp.writeFile(
               '${{github.workspace}}/release/release-notes.md', body);
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3
         with:
           if-no-files-found: error
           name: release
@@ -165,7 +169,7 @@ jobs:
       contents: write
     steps:
       - name: Download release artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           name: release
           path: release
@@ -180,7 +184,7 @@ jobs:
       - name: Update release text
         env:
           RELEASE_ID: ${{ github.event.release.id }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
         with:
           script: |
             const fsp = require('fs').promises;
@@ -203,11 +207,11 @@ jobs:
       id-token: write
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
         with:
           name: ${{ env.DIST_ARTIFACT }}
           path: dist
       - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.8.6
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # v1.8.6
         with:
           repository-url: https://test.pypi.org/legacy/
