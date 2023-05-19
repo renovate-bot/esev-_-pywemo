@@ -2,12 +2,14 @@ name: Publish
 on:
   release:
     types: [published]
-  push:
+  push:  # Run a dry-run on pushes to the main branch.
     branches:
     - main
     - pywemo_esev
     paths:
       - .github/**
+      - pyproject.toml
+      - scripts/build.sh
 
 permissions: {}  # No permissions by default. Permissions are added per-job.
 
