@@ -197,7 +197,7 @@ jobs:
             });
 
   pypi-release:
-    name: Publish to PyPi
+    name: Publish to PyPI
     needs: [github-release]
     runs-on: ubuntu-latest
     if: github.event.release
