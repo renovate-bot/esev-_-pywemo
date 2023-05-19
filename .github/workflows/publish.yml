@@ -137,7 +137,7 @@ jobs:
                 body = body.replaceAll(`\${${key}}`, value);
             }
             await fs.writeFile('${{github.workspace}}/release/release-notes.md', Buffer.from(body));
-        uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v3
         with:
           if-no-files-found: error
           name: release
