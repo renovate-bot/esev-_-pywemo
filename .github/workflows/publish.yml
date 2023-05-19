@@ -29,10 +29,6 @@ jobs:
     needs: [build]
     runs-on: ubuntu-latest
     steps:
-      - name: Download dist artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3
-        with:
-          name: ${{ env.DIST_ARTIFACT }}
       - name: Check if tag version matches project version
         if: github.event.release
         env:
