@@ -2,6 +2,7 @@ name: Publish
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 permissions: {}  # No permissions by default. Permissions are added per-job.
 
@@ -20,6 +21,7 @@ jobs:
     name: Check version and tag match
     needs: [build]
     runs-on: ubuntu-latest
+    if: github.event.release
     steps:
       - name: Download dist artifacts
         uses: actions/download-artifact@v3
@@ -95,41 +97,37 @@ jobs:
           upload-signing-artifacts: true
 
   assets:
-    name: Publish Release assets
+    name: Create release assets
     needs: [build, hash, slsa, sigstore]
     runs-on: ubuntu-latest
-    environment: release
-    permissions:
-      # Needed to run "gh release upload" and "rest.repos.updateRelease".
-      contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
       - name: Download build artifacts
         uses: actions/download-artifact@v3
-      - name: Upload release assets
+      - name: Populate release assets
         env:
-          GH_TOKEN: ${{ github.token }}
           PROVENANCE_NAME: ${{ needs.slsa.outputs.provenance-name }}
         run: |
-          ln -s "${PROVENANCE_NAME}" "./${PROVENANCE_NAME}/multiple.intoto.jsonl"
-          gh release upload "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" \
+          mkdir -p ./release
+          cp \
             ./${DIST_ARTIFACT}/* \
             ./hashes/* \
             "./${PROVENANCE_NAME}/${PROVENANCE_NAME}" \
-            "./${PROVENANCE_NAME}/multiple.intoto.jsonl" \
-            ./signing-artifacts-sigstore/*/*.sigstore
+            ./signing-artifacts-sigstore/*/*.sigstore \
+            ./release/
       - name: Add SHA256SUM environment variable
         run: |
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "SHA256SUM<<$EOF" >> "$GITHUB_ENV"
           cat ./hashes/*.sha256sum.txt >> "$GITHUB_ENV"
           echo "$EOF" >> "$GITHUB_ENV"
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          path: pywemo_checkout
       - name: Update release text
         env:
-          BODY: ${{ github.event.release.body || '' }}
-          RELEASE_ID: ${{ github.event.release.id }}
-          TEMPLATE_FILE: ./.github/RELEASE_NOTES_TEMPLATE.md
+          BODY: ${{ github.event.release && github.event.release.body || '' }}
+          TEMPLATE_FILE: ./pywemo_checkout/.github/RELEASE_NOTES_TEMPLATE.md
         uses: actions/github-script@v6
         with:
           script: |
@@ -138,17 +136,55 @@ jobs:
             for (const [key, value] of Object.entries(process.env)) {
                 body = body.replaceAll(`\${${key}}`, value);
             }
+            await fs.writeFile('${{github.workspace}}/release/release-notes.md', Buffer.from(body));
+        uses: actions/upload-artifact@v3
+        with:
+          if-no-files-found: error
+          name: release
+          path: release/*
 
+  github-release:
+    name: Publish Release assets
+    needs: [assets]
+    runs-on: ubuntu-latest
+    if: github.event.release
+    environment: release
+    permissions:
+      # Needed to run "gh release upload" and "rest.repos.updateRelease".
+      contents: write
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v3
+        name: release
+        path: release
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mv ./release/release-notes.md "${{github.workspace}}/"
+          gh release upload "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            ./release/*
+      - name: Update release text
+        env:
+          RELEASE_ID: ${{ github.event.release.id }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fsp = require('fs').promises;
+            let body = await fsp.readFile(
+              '${{github.workspace}}/release-notes.md', { encoding: 'utf8' });
             await github.rest.repos.updateRelease({
                 ...context.repo,
                 release_id: process.env.RELEASE_ID,
                 body: body,
             });
 
-  pypi:
+  pypi-release:
     name: Publish to PyPi
+    needs: [github-release]
     runs-on: ubuntu-latest
-    needs: [assets]
+    if: github.event.release
     environment: release
     permissions:
       # Needed for PyPI trusted publishing.
