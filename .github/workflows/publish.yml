@@ -50,7 +50,7 @@ jobs:
       - name: Hash dist files
         id: hash
         env:
-          PYWEMO_VERSION=${{ needs.build.outputs.version }}
+          PYWEMO_VERSION: ${{ needs.build.outputs.version }}
         working-directory: dist
         run: |
           sha256sum * | tee "pywemo-${PYWEMO_VERSION}.sha256sum.txt"
