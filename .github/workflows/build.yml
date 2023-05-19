@@ -70,26 +70,26 @@ jobs:
           path: ${{ steps.build.outputs.coverage-lcov }}
 
   windows:
-    name: Test on Windows
+    name: Test (Windows 3.8)
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.8'
       - run: |
           pip install -r scripts/bootstrap-requirements.txt_
           poetry install
           poetry run pytest tests
 
   macos:
-    name: Test on MacOS
+    name: Build and test (MacOS 3.8)
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.8'
       - run: ./scripts/build.sh
 
   # Coverage reporting is its own step so it can optionally fail if coveralls
