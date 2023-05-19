@@ -21,13 +21,13 @@ jobs:
     name: Check version and tag match
     needs: [build]
     runs-on: ubuntu-latest
-    if: github.event.release
     steps:
       - name: Download dist artifacts
         uses: actions/download-artifact@v3
         with:
           name: ${{ env.DIST_ARTIFACT }}
       - name: Check if tag version matches project version
+        if: github.event.release
         env:
           BUILD_VERSION: ${{ needs.build.outputs.version }}
         run: |
