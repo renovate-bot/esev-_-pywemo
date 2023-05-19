@@ -6,6 +6,8 @@ on:
     branches:
     - main
     - pywemo_esev
+    paths:
+      - .github/**
 
 permissions: {}  # No permissions by default. Permissions are added per-job.
 
