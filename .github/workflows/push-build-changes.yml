@@ -32,7 +32,7 @@ jobs:
       # artifacts are found.
       - name: Download build changes
         id: download
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
         with:
           result-encoding: string
           script: |
@@ -59,7 +59,7 @@ jobs:
       # Checkout the HEAD for the PR's branch.
       - name: Checkout code
         if: steps.download.outputs.result
-        uses: actions/checkout@v3
+        uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3
         with:
           ref: ${{github.event.workflow_run.head_branch}}
           path: pywemo_checkout
@@ -92,7 +92,7 @@ jobs:
       # https://github.com/orgs/community/discussions/50055
       - name: Push changes
         if: steps.download.outputs.result
-        uses: actions/github-script@v6
+        uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
