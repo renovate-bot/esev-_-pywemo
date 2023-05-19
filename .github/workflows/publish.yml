@@ -155,8 +155,9 @@ jobs:
     steps:
       - name: Download release artifacts
         uses: actions/download-artifact@v3
-        name: release
-        path: release
+        with:
+          name: release
+          path: release
       - name: Upload release assets
         env:
           GH_TOKEN: ${{ github.token }}
