@@ -4,8 +4,8 @@ on:
     types: [published]
   push:  # Run a dry-run on pushes to the main branch.
     branches:
-    - main
-    - pywemo_esev
+      - main
+      - pywemo_esev
     paths:
       - .github/**
       - pyproject.toml

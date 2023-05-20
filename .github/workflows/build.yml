@@ -3,8 +3,8 @@ on:
   pull_request:
   push:
     branches:
-    - main
-    - pywemo_esev
+      - main
+      - pywemo_esev
   workflow_call:
     outputs:
       version:
