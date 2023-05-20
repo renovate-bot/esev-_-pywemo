@@ -27,9 +27,10 @@ jobs:
     environment: push-build-changes
     steps:
       # If changes were needed, the Build workflow will upload the diff as an
-      # artifact. Find the artifact, download it, and return the path to the
-      # downloaded file. The returned path will be an empty string '' if no
-      # artifacts are found.
+      # artifact. The Build took place on a different workflow run so the usual
+      # actions/checkout won't work. Instead this finds the artifact, downloads
+      # it, and returns the path to the downloaded file. The returned path will
+      # be an empty string '' if no artifacts are found.
       - name: Download build changes
         id: download
         uses: actions/github-script@d7906e4ad0b1822421a7e6a35d5ca353c962f410 # v6
@@ -53,7 +54,9 @@ jobs:
             });
             await io.mkdirP('${{github.workspace}}/download');
             const fs = require('fs');
-            fs.writeFileSync('${{github.workspace}}/download/build-changes.zip', Buffer.from(download.data));
+            fs.writeFileSync(
+              '${{github.workspace}}/download/build-changes.zip',
+              Buffer.from(download.data));
             return '${{github.workspace}}/download/build-changes.zip';
 
       # Checkout the HEAD for the PR's branch.
