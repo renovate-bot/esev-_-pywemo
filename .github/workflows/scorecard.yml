@@ -12,7 +12,9 @@ on:
   schedule:
     - cron: '41 14 * * 4'
   push:
-    branches: [ "main" ]
+    branches: 
+      - main
+      - pywemo_esev
 
 # Declare default permissions as read only.
 permissions: read-all
