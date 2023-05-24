@@ -55,7 +55,7 @@ jobs:
           POETRY_CACHE_DIR: ./.cache/pypoetry
         run: |
           bash -x ./scripts/build.sh
-          ls -al ./.cache
+          ls -al ./.cache/*/*
       - name: Check for code modifications
         if: always()
         id: modified
