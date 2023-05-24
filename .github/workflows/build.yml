@@ -39,11 +39,23 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Cache build inputs
+        uses: actions/cache@v3
+        with:
+          path: |
+            ./.cache/pip
+            ./.cache/pypoetry
+          key: ${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: ${{ runner.os }}-
       - name: Build
         id: build
         env:
           OUTPUT_ENV_VAR: GITHUB_OUTPUT
-        run: bash -x ./scripts/build.sh
+          PIP_CACHE_DIR: ./.cache/pip
+          POETRY_CACHE_DIR: ./.cache/pypoetry
+        run: |
+          bash -x ./scripts/build.sh
+          ls -al ./.cache
       - name: Check for code modifications
         if: always()
         id: modified
