@@ -50,7 +50,7 @@ jobs:
           # will continue to grow over time.
           restore-keys: >
             ${{ github.event_name == 'push' &&
-                github.ref_name == 'main' &&
+                github.ref_name == 'pywemo_esev' &&
                 'no-restore' || format('{0}-', runner.os) }}
       - name: Build
         id: build
