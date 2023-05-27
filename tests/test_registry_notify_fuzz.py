@@ -4,15 +4,16 @@ import string
 import sys
 import unittest.mock as mock
 
-import atheris
-import pytest
-import requests
-from hypothesis import example, given
-from hypothesis import strategies as st
+from tests import atheris
 
 with atheris.instrument_imports():
     from lxml import etree
     import pywemo
+
+import pytest
+import requests
+from hypothesis import example, given
+from hypothesis import strategies as st
 
 from tests.ouimeaux_device.test_device import mocked_requests_get
 
