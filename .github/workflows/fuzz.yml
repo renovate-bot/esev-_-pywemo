@@ -23,7 +23,7 @@ jobs:
     name: Fuzzing
     runs-on: ubuntu-latest
     concurrency:
-      group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.event_name }}-${{ github.ref }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
