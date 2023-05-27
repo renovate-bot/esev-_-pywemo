@@ -343,7 +343,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             doc = self._get_xml_from_http_body()
             for propnode in doc.findall(f'./{NS}property'):
                 for property_ in list(propnode):
-                    text = property_.text
+                    text = property_.text or ""
                     outer.event(device, property_.tag, text, path=self.path)
 
         self._send_response(200, RESPONSE_SUCCESS)
@@ -639,6 +639,7 @@ class SubscriptionRegistry:
         self._httpd.outer = self
         LOG.info("Listening on port %d", self.port)
         self._httpd.serve_forever()
+        self._httpd.server_close()
 
     def _run_event_loop(self) -> None:
         """Run the event thread loop."""

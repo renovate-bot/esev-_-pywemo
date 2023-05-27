@@ -46,6 +46,9 @@ types-requests = ">=2.0"
 coverage = "^7.2.6"
 # version of generateDS used to create device.py and service.py in .../api/xsd
 generateDS = "2.41.5"
+# fuzzing
+hypothesis = "^6.75.3"
+atheris = "^2.2.2"
 # other
 deptry = "^0.11.0"
 pre-commit = "^3.3"

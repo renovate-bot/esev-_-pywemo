@@ -1,0 +1,34 @@
+altgraph==0.17.3 ; python_full_version >= "3.8.1" and python_version < "3.12" \
+    --hash=sha256:ad33358114df7c9416cdb8fa1eaa5852166c505118717021c6a8c7c7abbd03dd \
+    --hash=sha256:c8ac1ca6772207179ed8003ce7687757c04b0b71536f81e2ac5755c6226458fe
+macholib==1.16.2 ; python_full_version >= "3.8.1" and python_version < "3.12" and sys_platform == "darwin" \
+    --hash=sha256:44c40f2cd7d6726af8fa6fe22549178d3a4dfecc35a9cd15ea916d9c83a688e0 \
+    --hash=sha256:557bbfa1bb255c20e9abafe7ed6cd8046b48d9525db2f9b77d3122a63a2a8bf8
+pefile==2023.2.7 ; python_full_version >= "3.8.1" and python_version < "3.12" and sys_platform == "win32" \
+    --hash=sha256:82e6114004b3d6911c77c3953e3838654b04511b8b66e8583db70c65998017dc \
+    --hash=sha256:da185cd2af68c08a6cd4481f7325ed600a88f6a813bad9dea07ab3ef73d8d8d6
+pip==23.1.2 ; python_full_version >= "3.8.1" and python_version < "3.12" \
+    --hash=sha256:0e7c86f486935893c708287b30bd050a36ac827ec7fe5e43fe7cb198dd835fba \
+    --hash=sha256:3ef6ac33239e4027d9a5598a381b9d30880a1477e50039db2eac6e8a8f6d1b18
+pyinstaller-hooks-contrib==2023.3 ; python_full_version >= "3.8.1" and python_version < "3.12" \
+    --hash=sha256:062ad7a1746e1cfc24d3a8c4be4e606fced3b123bda7d419f14fcf7507804b07 \
+    --hash=sha256:bb39e1038e3e0972420455e0b39cd9dce73f3d80acaf4bf2b3615fea766ff370
+pyinstaller==5.11.0 ; python_full_version >= "3.8.1" and python_version < "3.12" \
+    --hash=sha256:036a062a228af41f6bb6370a4e87cef34858cc839200a07ace7f8738ef64ad86 \
+    --hash=sha256:049cdc3524aefb5ca015a63d2c81b6bf1567cc818ac066859fbfde702c6165d3 \
+    --hash=sha256:0af9d11a09ce217d32f95c79c984054457b310671387ff32bae1496876308556 \
+    --hash=sha256:2a1fe6d0da22f207cfa4b3221fe365503cba071c77aac19f76a75503f67d9ff9 \
+    --hash=sha256:42fdea67e4c2217cedd54d17d1d402736df3ba718db2b497df65df5a68ae4f93 \
+    --hash=sha256:8454bac8f3cb2219a3ce2227fd039bdaf943dcba60e8c55732958ea3a6d81263 \
+    --hash=sha256:a445a91b85c9a1ea3985268643a674900dd86f244cc4be4ff4ec4c6367ff99a9 \
+    --hash=sha256:b3c6299fd7526c6ca87ea5f9017fb1928d47046df0b9f983d6bbd893801010dc \
+    --hash=sha256:b4cac0e7b0d63c6a869843113008f59fd5b38b2959ffa6059e7fac4bb05de92b \
+    --hash=sha256:b8a4f6834e5c85150948e22c74dd3ab8b98aa4ccdf964d880ac14d2f78d9c1a4 \
+    --hash=sha256:cb87cee0b3c81ccd74d4bf3f4faf03b5e1e39bb91f1a894b2ce4cd22363bf779 \
+    --hash=sha256:e359571327bbef434fc61324891399f9117efbb685b5065234eebb01713650a8
+pywin32-ctypes==0.2.0 ; python_full_version >= "3.8.1" and python_version < "3.12" and sys_platform == "win32" \
+    --hash=sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942 \
+    --hash=sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98
+setuptools==67.7.2 ; python_full_version >= "3.8.1" and python_version < "3.12" \
+    --hash=sha256:23aaf86b85ca52ceb801d32703f12d77517b2556af839621c641fca11287952b \
+    --hash=sha256:f104fa03692a2602fa0fec6c6a9e63b6c8a968de13e17c026957dd1f53d80990
